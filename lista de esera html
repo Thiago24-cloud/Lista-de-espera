@@ -1,0 +1,416 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinMemory — Acesso Antecipado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #00E87A;
+    --green-dim: #00b85f;
+    --dark: #0a0e0c;
+    --card: #111612;
+    --border: rgba(0,232,122,0.15);
+    --text: #e8f5ee;
+    --muted: #5a7a65;
+  }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,232,122,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,232,122,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+
+  /* Glow blob */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -20%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0,232,122,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .wrapper {
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(32px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,232,122,0.08);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--green);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .badge span { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 8vw, 54px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--green);
+  }
+
+  .subtitle {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 40px;
+    font-weight: 300;
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    backdrop-filter: blur(12px);
+  }
+
+  .field {
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  .icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 16px;
+    pointer-events: none;
+    transition: color 0.2s;
+  }
+
+  input {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 14px 16px 14px 44px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+
+  input::placeholder { color: rgba(255,255,255,0.2); }
+
+  input:focus {
+    border-color: rgba(0,232,122,0.4);
+    box-shadow: 0 0 0 3px rgba(0,232,122,0.08);
+  }
+
+  input:focus + .icon,
+  .input-wrap:focus-within .icon { color: var(--green); }
+
+  .input-wrap .icon { order: 2; }
+  .input-wrap { display: flex; flex-direction: row; align-items: center; }
+  .input-wrap input { order: 1; flex: 1; }
+  .input-wrap .icon { position: absolute; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    padding-left: 4px;
+  }
+
+  .error-msg {
+    font-size: 11px;
+    color: #ff6b6b;
+    margin-top: 6px;
+    padding-left: 4px;
+    display: none;
+  }
+
+  /* Instagram prefix */
+  .insta-wrap {
+    display: flex;
+    align-items: center;
+  }
+
+  .insta-prefix {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-right: none;
+    border-radius: 12px 0 0 12px;
+    padding: 14px 12px;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1;
+    user-select: none;
+  }
+
+  .insta-wrap input {
+    border-radius: 0 12px 12px 0;
+    padding-left: 12px;
+  }
+
+  /* Button */
+  .btn {
+    width: 100%;
+    margin-top: 28px;
+    background: var(--green);
+    color: #000;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+  }
+
+  .btn:hover { background: #00ff86; transform: translateY(-1px); box-shadow: 0 8px 30px rgba(0,232,122,0.3); }
+  .btn:active { transform: translateY(0); }
+
+  .btn.loading { pointer-events: none; opacity: 0.7; }
+
+  /* Success state */
+  .success-view {
+    text-align: center;
+    display: none;
+    padding: 20px 0;
+  }
+
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(0,232,122,0.1);
+    border: 2px solid var(--green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 28px;
+    animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes pop {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  .success-view h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .success-view p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .footer strong { color: var(--green); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="badge"><span></span> Vagas limitadas</div>
+
+  <h1>Finanças no<br><em>automático.</em><br>Preços em tempo real.</h1>
+  <p class="subtitle">O FinMemory organiza suas finanças pessoais automaticamente <em style="color:var(--text);font-style:normal">e</em> ainda conecta você a uma rede colaborativa de preços — tudo num só lugar.</p>
+
+  <div class="card">
+    <!-- Form view -->
+    <div id="formView">
+      <div class="field">
+        <label>Seu nome</label>
+        <div class="input-wrap">
+          <input type="text" id="nome" placeholder="Como você se chama?" autocomplete="off">
+          <span class="icon">👤</span>
+        </div>
+        <div class="error-msg" id="nomeErr">Por favor, informe seu nome.</div>
+      </div>
+
+      <div class="field">
+        <label>E-mail Gmail</label>
+        <div class="input-wrap">
+          <input type="email" id="email" placeholder="seunome@gmail.com" autocomplete="off">
+          <span class="icon">✉️</span>
+        </div>
+        <div class="hint">Usado para rastrear seus gastos automaticamente.</div>
+        <div class="error-msg" id="emailErr">Use um e-mail @gmail.com válido.</div>
+      </div>
+
+      <div class="field">
+        <label>Instagram</label>
+        <div class="insta-wrap">
+          <div class="insta-prefix">@</div>
+          <input type="text" id="instagram" placeholder="seuusuario" autocomplete="off">
+        </div>
+        <div class="hint">Para entrar em contato e liberar seu acesso.</div>
+        <div class="error-msg" id="instaErr">Informe seu @ do Instagram.</div>
+      </div>
+
+      <button class="btn" id="submitBtn" onclick="handleSubmit()">
+        Quero acesso antecipado →
+      </button>
+    </div>
+
+    <!-- Success view -->
+    <div class="success-view" id="successView">
+      <div class="success-icon">✓</div>
+      <h3>Você está na lista! 🎉</h3>
+      <p>Recebemos seus dados.<br>Entraremos em contato pelo Instagram<br>para liberar seu acesso em breve.</p>
+    </div>
+  </div>
+
+  <div class="footer">Já são <strong>62+ usuários</strong> organizando as finanças com o FinMemory.</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const { createClient } = supabase;
+  const _supabase = createClient(
+    'https://faxqrkxqfwjdavorxien.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZheHFya3hxZndqZGF2b3J4aWVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NTE4NTYsImV4cCI6MjA4MTQyNzg1Nn0.nXGv3FGwFJWWTRLwEgBRgOmj-RJu-pv7vvZYmyiO_3s'
+  );
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function clearError(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+
+  async function handleSubmit() {
+    let valid = true;
+    clearError('nomeErr'); clearError('emailErr'); clearError('instaErr');
+
+    const nome      = document.getElementById('nome').value.trim();
+    const email     = document.getElementById('email').value.trim();
+    const instagram = document.getElementById('instagram').value.trim().replace(/^@/, '');
+
+    if (!nome) { showError('nomeErr', 'Por favor, informe seu nome.'); valid = false; }
+
+    const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    if (!gmailRegex.test(email)) { showError('emailErr', 'Use um e-mail @gmail.com válido.'); valid = false; }
+
+    if (!instagram) { showError('instaErr', 'Informe seu @ do Instagram.'); valid = false; }
+
+    if (!valid) return;
+
+    const btn = document.getElementById('submitBtn');
+    btn.classList.add('loading');
+    btn.textContent = 'Enviando...';
+
+    const { error } = await _supabase
+      .from('leads')
+      .insert([{ nome, email, instagram }]);
+
+    if (error) {
+      btn.classList.remove('loading');
+      btn.textContent = 'Quero acesso antecipado →';
+      showError('emailErr', 'Erro ao enviar. Tente novamente.');
+      console.error(error);
+      return;
+    }
+
+    document.getElementById('formView').style.display = 'none';
+    const sv = document.getElementById('successView');
+    sv.style.display = 'block';
+    sv.style.animation = 'fadeUp 0.5s ease both';
+  }
+
+  ['nome','email','instagram'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => clearError(id + 'Err'));
+  });
+</script>
+</body>
+</html>
